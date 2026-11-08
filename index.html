@@ -814,8 +814,8 @@ app.listen(PORT, async ()=>{
   console.log(`🚀 SHURWAT HEAVY SERVER running on port ${PORT}`);
   await warmCache();
   startLiveSync();
-  // Keep-alive: har 10 min khud ko ping (Render free tier soye na)
-  setInterval(()=>{ fetch(`http://localhost:${PORT}/ping`).catch(()=>{}); }, 10*60*1000);
+  // Keep-alive: har 5 min khud ko ping (Render free tier soye na)
+  setInterval(()=>{ fetch(`http://localhost:${PORT}/ping`).catch(()=>{}); }, 5*60*1000);
 });
 
 </script>
