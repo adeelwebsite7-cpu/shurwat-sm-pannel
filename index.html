@@ -316,14 +316,14 @@ window.sendOtp=async function(){
   var btn=document.getElementById('sendOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
   window.showOtpMsg('Sending OTP to your Gmail... Please wait...', true);
   var lastErr='';
-  var urls=['/api/otp/send','/api/otp','/api/otp/verify']; // Vercel direct routes, no rewrite
+  var urls=['/api/index','/api/otp/send','/api/otp','/api/otp/verify']; // /api/index pehle - jo Vercel me pehle se hai, api/otp folder ki zaroorat nahi // Vercel direct routes, no rewrite
   // Try /api/otp/send first, fallback to /api/otp - Vercel rewrite safe
-  for(var i=0;i<3;i++){
+  for(var i=0;i<4;i++){
     try{
       var r=await fetch(urls[i],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,name:name})});
       var j={}; try{ j=await r.json(); }catch(e){}
       if(r.ok){ window.showOtpMsg('OTP sent! Check Gmail + Spam folder.', true); if(window.toast) window.toast('OTP sent'); var s=60; var tm=setInterval(function(){ s--; if(btn) btn.textContent='Resend in '+s+'s'; if(s<=0){ clearInterval(tm); if(btn){ btn.disabled=false; btn.textContent='Resend OTP'; } } },1000); return; }
-      lastErr=(r.status===404?'API not found (404) - api/otp folder Vercel me nahi gaya. api/otp/send.js check karo + Redeploy karo':(j.error||('Server error '+r.status)));
+      lastErr=(r.status===404?'OTP service not ready - Redeploy karo, 1 min me theek ho jayega':(j.error||('Server error '+r.status)));
       // 429 = already sent, stop retrying
       if(r.status===429){ break; }
       // 500 = Gmail not set up, stop retrying, show real reason
