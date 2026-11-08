@@ -5,6 +5,7 @@ if (!global.__shurwatOtp) global.__shurwatOtp = new Map();
 const store = global.__shurwatOtp;
 function readBody(req) {
   return new Promise((resolve) => {
+    if (typeof req.body === 'string' && req.body.length) { try{ return resolve(JSON.parse(req.body)); }catch(e){ return resolve({}); } }
     if (req.body && typeof req.body === 'object' && Object.keys(req.body).length) return resolve(req.body);
     let data = '';
     req.on('data', (c) => { data += c; });
@@ -15,29 +16,35 @@ function readBody(req) {
 function fbKey(email){ return encodeURIComponent(email.toLowerCase().trim().replace(/[^a-z0-9@._-]/g,'_')); }
 function fbGet(email){
   return new Promise((resolve)=>{
-    const base=(process.env.FIREBASE_DB_URL||'').replace(/\/$/,'');
-    if(!base) return resolve(null);
-    const url=base+'/otps/'+fbKey(email)+'.json';
-    https.get(url, (r)=>{ let d=''; r.on('data',c=>d+=c); r.on('end',()=>{ try{ resolve(d && d!=='null' ? JSON.parse(d) : null); }catch(e){ resolve(null); } }); }).on('error',()=>resolve(null));
+    try{
+      const base=String(process.env.FIREBASE_DB_URL||'').trim().replace(/\/$/,'');
+      if(!base || !base.startsWith('http')) return resolve(null);
+      const url=base+'/otps/'+fbKey(email)+'.json';
+      https.get(url, (r)=>{ let d=''; r.on('data',c=>d+=c); r.on('end',()=>{ try{ resolve(d && d!=='null' ? JSON.parse(d) : null); }catch(e){ resolve(null); } }); }).on('error',()=>resolve(null)).on('timeout',()=>resolve(null));
+    }catch(e){ resolve(null); }
   });
 }
 function fbPut(email, obj){
   return new Promise((resolve)=>{
-    const base=(process.env.FIREBASE_DB_URL||'').replace(/\/$/,'');
-    if(!base) return resolve(false);
-    const data=JSON.stringify(obj);
-    const u=new URL(base+'/otps/'+fbKey(email)+'.json');
-    const req=https.request({ hostname:u.hostname, path:u.pathname+u.search, method:'PUT', headers:{ 'Content-Type':'application/json', 'Content-Length':Buffer.byteLength(data) } }, (r)=>{ r.on('data',()=>{}); r.on('end',()=>resolve(true)); });
-    req.on('error',()=>resolve(false)); req.write(data); req.end();
+    try{
+      const base=String(process.env.FIREBASE_DB_URL||'').trim().replace(/\/$/,'');
+      if(!base || !base.startsWith('http')) return resolve(false);
+      const data=JSON.stringify(obj);
+      let u; try{ u=new URL(base+'/otps/'+fbKey(email)+'.json'); }catch(e){ return resolve(false); }
+      const req=https.request({ hostname:u.hostname, path:u.pathname+u.search, method:'PUT', headers:{ 'Content-Type':'application/json', 'Content-Length':Buffer.byteLength(data) } }, (r)=>{ r.on('data',()=>{}); r.on('end',()=>resolve(true)); });
+      req.on('error',()=>resolve(false)); req.on('timeout',()=>resolve(false)); req.write(data); req.end();
+    }catch(e){ resolve(false); }
   });
 }
 function fbDel(email){
   return new Promise((resolve)=>{
-    const base=(process.env.FIREBASE_DB_URL||'').replace(/\/$/,'');
-    if(!base) return resolve(false);
-    const u=new URL(base+'/otps/'+fbKey(email)+'.json');
-    const req=https.request({ hostname:u.hostname, path:u.pathname+u.search, method:'DELETE' }, (r)=>{ r.on('data',()=>{}); r.on('end',()=>resolve(true)); });
-    req.on('error',()=>resolve(false)); req.end();
+    try{
+      const base=String(process.env.FIREBASE_DB_URL||'').trim().replace(/\/$/,'');
+      if(!base || !base.startsWith('http')) return resolve(false);
+      let u; try{ u=new URL(base+'/otps/'+fbKey(email)+'.json'); }catch(e){ return resolve(false); }
+      const req=https.request({ hostname:u.hostname, path:u.pathname+u.search, method:'DELETE' }, (r)=>{ r.on('data',()=>{}); r.on('end',()=>resolve(true)); });
+      req.on('error',()=>resolve(false)); req.on('timeout',()=>resolve(false)); req.end();
+    }catch(e){ resolve(false); }
   });
 }
 function sendGmail({ user, pass, to, subject, html }) {
