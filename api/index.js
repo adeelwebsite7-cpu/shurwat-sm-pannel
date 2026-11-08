@@ -7,6 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const admin = require('firebase-admin');
+let nodemailer=null; try{ nodemailer=require('nodemailer'); }catch(e){ console.log('nodemailer missing'); }
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,7 +18,62 @@ app.use(compression()); // GZIP - data 70% chota
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// ---------- VERCEL FIX: /api kaat de to bhi kaam kare ----------
+app.use((req,res,next)=>{
+  if(req.url==='/debug') req.url='/api/debug';
+  if(req.url==='/otp/send') req.url='/api/otp/send';
+  if(req.url==='/otp/verify') req.url='/api/otp/verify';
+  next();
+});
+
+
 // Simple Rate Limit - spam se server heavy na ho
+
+// ---------- SHURWAT SINGLE-FILE API FIX - Cannot GET khatam, 1 file sab sambhalegi ----------
+app.get(['/api/debug','/debug'], (req,res)=>{
+  const hasGmailUser = !!process.env.GMAIL_USER;
+  const hasAppPassword = !!process.env.GMAIL_APP_PASSWORD;
+  const appPassLength = (process.env.GMAIL_APP_PASSWORD||'').replace(/\s/g,'').length;
+  res.json({ ok:true, hasGmailUser, hasAppPassword, appPassLength, gmailUserHint: process.env.GMAIL_USER ? process.env.GMAIL_USER.slice(0,2)+'***@gmail.com' : null });
+});
+// OTP - same file me, alag file na hone par bhi chalega
+app.post(['/api/otp/send','/api/otp','/otp/send','/otp'], async (req,res)=>{
+  try{
+    const otpHandler = require('./otp.js');
+    // otp.js ko req.url set karke bhejo
+    req.url = '/api/otp/send';
+    return otpHandler(req,res);
+  }catch(e){ res.status(500).json({ ok:false, error:'OTP handler missing: '+e.message }); }
+});
+app.post(['/api/otp/verify','/otp/verify'], async (req,res)=>{
+  try{
+    const otpHandler = require('./otp.js');
+    req.url = '/api/otp/verify';
+    return otpHandler(req,res);
+  }catch(e){ res.status(500).json({ ok:false, error:'OTP verify handler missing: '+e.message }); }
+});
+app.get(['/api/otp/send','/api/test-gmail'], (req,res)=>{ res.json({ ok:false, error:'Use POST for OTP, GET not allowed' }); });
+// ---------- END SINGLE-FILE FIX ----------
+
+
+// ---------- POST /api/index OTP FALLBACK - api/otp folder na ho to bhi OTP chalega ----------
+app.post(['/api/index','/api/','/api'], async (req,res)=>{
+  try{
+    const b = req.body || {};
+    // Agar body me email hai to ye OTP request hai
+    if (b.email) {
+      const otpHandler = require('./otp.js');
+      const hasCode = !!(b.code || b.otp);
+      req.url = hasCode ? '/api/otp/verify' : '/api/otp/send';
+      req.headers['x-otp-action'] = hasCode ? 'verify' : 'send';
+      return otpHandler(req,res);
+    }
+    return res.json({ ok:true, msg:'SHURWAT API running' });
+  }catch(e){ return res.status(500).json({ error:'OTP failed: '+e.message }); }
+});
+app.get(['/api/index'], (req,res)=>{ return res.json({ ok:true, msg:'SHURWAT API running - POST /api/index for OTP' }); });
+// ---------- END OTP FALLBACK ----------
+
 const hits = new Map();
 app.use((req, res, next) => {
   const ip = req.ip || req.headers['x-forwarded-for'] || 'local';
@@ -95,14 +151,7 @@ function startLiveSync(){
 }
 
 // ---------- 4. HEALTH ----------
-app.get('/', (req,res)=>res.json({status:'SHURWAT HEAVY SERVER RUNNING 🔥', uptime:Math.floor(process.uptime()), cachedUsers:cache.usersByName.size, cachedServices:cache.services?Object.keys(cache.services).length:0, cachedVouchers:cache.vouchers.size}));
-app.get('/ping', (req,res)=>res.json({ok:true, time:Date.now()}));
-
-// ---------- 5. AUTH - LOGIN BY NAME (0ms cache) ----------
-app.post('/api/auth/login', async (req,res)=>{
-  try{
-    const {name} = req.body||{};
-    if(!name) return res.status(400).json({error:'Enter Name'});
+app.get('/', (req,res)=>{ res.redirect('/index.html'); }); // Root -> Index, Server JSON nahi dikhega
     const found = cache.usersByName.get(keyName(name));
     if(found) return res.json({email:found.email, uid:found.uid, name:found.name, from:'cache-0ms'});
     if(!db) return res.status(404).json({error:'Name not found. Please Sign Up first.'});
@@ -257,6 +306,81 @@ app.post('/api/cache/clear', async (req,res)=>{
   return res.json({ok:true, msg:'Cache cleared + rewarmed'});
 });
 
+
+
+
+// ---------- DEBUG - Env check, bina secret dikhaye ----------
+app.get('/api/debug', (req,res)=>{
+  const u = (process.env.GMAIL_USER||'').trim();
+  const p = (process.env.GMAIL_APP_PASSWORD||'').replace(/\s+/g,'');
+  return res.json({
+    hasGmailUser: !!u,
+    gmailUserLength: u.length,
+    gmailUserHint: u ? (u.slice(0,2)+'***'+u.slice(u.indexOf('@'))) : 'MISSING',
+    hasAppPassword: !!p,
+    appPassLength: p.length,
+    hasNodemailer: !!nodemailer,
+    time: new Date().toISOString()
+  });
+});
+// Alias: Vercel kabhi /api kaat deta hai, isliye dono routes
+app.get('/debug', (req,res)=>{ const u=(process.env.GMAIL_USER||'').trim(); const p=(process.env.GMAIL_APP_PASSWORD||'').replace(/\s+/g,''); return res.json({ hasGmailUser: !!u, gmailUserLength: u.length, gmailUserHint: u ? (u.slice(0,2)+'***'+u.slice(u.indexOf('@'))) : 'MISSING', hasAppPassword: !!p, appPassLength: p.length, hasNodemailer: !!nodemailer, time: new Date().toISOString(), note:'alias /debug works' }); });
+
+// ---------- OTP v3 - NO Firebase folder needed, NO FIREBASE_SERVICE_ACCOUNT, ONLY GMAIL vars ----------
+// OTP sirf server memory me rehta hai, Firebase me folder banane ki zaroorat nahi
+const otpMem3 = new Map();
+function getMailer3(){
+  if(!nodemailer) return null;
+  const user = (process.env.GMAIL_USER || '').trim();
+  const pass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g,'');
+  if(!user || !pass) return null;
+  return nodemailer.createTransport({ host:'smtp.gmail.com', port:587, secure:false, requireTLS:true, auth:{ user, pass } });
+}
+app.post('/api/otp/send', async (req,res)=>{
+  try{
+    const { email, name } = req.body||{};
+    const em = String(email||'').toLowerCase().trim();
+    if(!em || !em.includes('@')) return res.status(400).json({error:'Enter a valid Gmail Address'});
+    const mailer = getMailer3();
+    if(!mailer) return res.status(500).json({error:'OTP service not set up yet. Vercel me GMAIL_USER + GMAIL_APP_PASSWORD check karo, phir Redeploy karo.'});
+    const prev = otpMem3.get(em);
+    if(prev && prev.sentAt && (Date.now()-prev.sentAt < 60*1000)) return res.status(429).json({error:'OTP already sent. Wait 60 seconds and try again.'});
+    const code = String(Math.floor(100000 + Math.random()*900000));
+    otpMem3.set(em, { email:em, code, name:name||'', sentAt:Date.now(), expiresAt:Date.now()+5*60*1000, attempts:0, verified:false });
+    const fromUser = (process.env.GMAIL_USER||'').trim();
+    try{
+      await mailer.sendMail({
+        from: '"SHURWAT SMM" <'+fromUser+'>',
+        to: em,
+        subject: 'Your SHURWAT SMM OTP - '+code,
+        html: '<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#0f172a;color:#fff;border-radius:16px;text-align:center"><h1 style="margin:0">SHURWAT <span style="color:#a78bfa">SMM</span></h1><p style="color:#cbd5e1">Your OTP for Sign Up</p><div style="font-size:36px;font-weight:800;letter-spacing:8px;background:#fff;color:#111;padding:16px;border-radius:12px">'+code+'</div><p style="color:#94a3b8;font-size:13px">This code expires in 5 minutes. Never share it with anyone.</p></div>',
+        text: 'Your SHURWAT SMM OTP is: '+code+' (expires in 5 minutes)'
+      });
+    }catch(e){
+      console.log('GMAIL SEND FAIL:', e.message);
+      otpMem3.delete(em);
+      if(e.message && (e.message.includes('Invalid login') || e.message.includes('Username and Password not accepted') || e.message.includes('535'))) return res.status(500).json({error:'Gmail login failed. GMAIL_USER aur GMAIL_APP_PASSWORD ek hi Gmail (adeelwebsite7@gmail.com) ke hone chahiye. App Code naya banao, gap mat do.'});
+      if(e.message && e.message.includes('Missing credentials')) return res.status(500).json({error:'OTP service not set up. GMAIL_USER + GMAIL_APP_PASSWORD Vercel Project me nahi hain.'});
+      return res.status(500).json({error:'Gmail se connect nahi ho raha: '+e.message.slice(0,120)});
+    }
+    return res.json({ok:true, msg:'OTP sent to your Gmail'});
+  }catch(e){ console.log('otp send error', e.message); return res.status(500).json({error:'Could not send OTP. Try again.'}); }
+});
+app.post('/api/otp/verify', async (req,res)=>{
+  try{
+    const { email, code } = req.body||{};
+    const em = String(email||'').toLowerCase().trim();
+    const c = String(code||'').trim();
+    if(!em || !c) return res.status(400).json({error:'Enter OTP code'});
+    const v = otpMem3.get(em);
+    if(!v || !v.code) return res.status(400).json({error:'No OTP found. Tap Send OTP first.'});
+    if(Date.now() > (v.expiresAt||0)) return res.status(400).json({error:'OTP expired. Tap Send OTP again.'});
+    if((v.attempts||0) >= 5) return res.status(400).json({error:'Too many wrong tries. Tap Send OTP again.'});
+    if(String(v.code) !== c){ v.attempts=(v.attempts||0)+1; return res.status(400).json({error:'Wrong OTP. Try again.'}); }
+    v.verified=true; v.verifiedAt=Date.now();
+    return res.json({ok:true, msg:'OTP verified'});
+  }catch(e){ console.log('otp verify error', e.message); return res.status(500).json({error:'Could not verify OTP. Try again.'}); }
+});
 
 // ---------- 13. VERCEL EXPORT ----------
 let _warmed = false;
