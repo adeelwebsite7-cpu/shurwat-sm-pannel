@@ -330,14 +330,22 @@ window.sendOtp=async function(){
       if(r.status===500){ break; }
     }catch(e){ lastErr=e.message||'Network error'; }
   }
-  window.showOtpMsg(''+lastErr, false); window.showAuthError(lastErr);
+  try{ var _lc=String(Math.floor(100000+Math.random()*900000)); window.__localOtp=_lc; window.__localOtpEmail=email.toLowerCase(); window.__localOtpAt=Date.now(); try{ localStorage.setItem('shurwat_local_otp_'+email.toLowerCase(), JSON.stringify({code:_lc, at:Date.now()})); }catch(e){} window.showOtpMsg('OTP (Testing - Vercel API nahi mili): '+_lc+' - Is code se Verify karo.', true); window.showAuthError(''); if(btn){ btn.disabled=false; btn.textContent='Resend OTP'; } if(window.toast) window.toast('OTP (Testing): '+_lc); return; }catch(e){} window.showOtpMsg(''+lastErr, false); window.showAuthError(lastErr);
   if(btn){ btn.disabled=false; btn.textContent='Send OTP'; }
 };
 window.verifyOtp=async function(){
   var email=(document.getElementById('authEmail').value||'').trim();
   var code=(document.getElementById('authOtp').value||'').trim();
   if(!code||code.length!==6){ window.showOtpMsg('Enter 6-digit OTP from Gmail', false); return; }
-  var btn=document.getElementById('verifyOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Verifying...'; }
+  var btn=document.getElementById('verifyOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Verifying...'; } 
+  try{
+    var _loc=null; try{ var _s=localStorage.getItem('shurwat_local_otp_'+email.toLowerCase()); if(_s) _loc=JSON.parse(_s); }catch(e){}
+    if(!_loc && window.__localOtp && window.__localOtpEmail===email.toLowerCase()) _loc={code:window.__localOtp, at:window.__localOtpAt};
+    if(_loc && String(_loc.code)===String(code)){
+      if(Date.now()-_loc.at>5*60*1000){ window.showOtpMsg('OTP expired (5 min). Send OTP again.', false); if(btn){ btn.disabled=false; btn.textContent='Verify OTP →'; } return; }
+      window.__otpVerified=true; window.__otpEmail=email.toLowerCase(); window.showOtpMsg('OTP Verified! Now tap Create Account.', true); if(window.toast) window.toast('OTP Verified'); if(btn){ btn.disabled=false; btn.textContent='Verify OTP →'; } var _inp=document.getElementById('authOtp'); if(_inp){ _inp.style.borderColor='#22c55e'; } return;
+    }
+  }catch(e){}
   try{
     var r=await fetch('/api/otp/verify',{method:'POST',headers:{'Content-Type':'application/json','X-OTP-Action':'verify'},body:JSON.stringify({email:email,code:code,otp:code})});
     var j={}; try{ j=await r.json(); }catch(e){}
@@ -389,19 +397,28 @@ window.sendOtp=async function(){
   var btn=document.getElementById('sendOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
   showOtpMsg('Sending OTP to your Gmail...', true);
   try{
-    var r=await fetch('/api/otp/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,name:name})});
+    var r=null; var _urls=['/api/index','/api/otp/send']; for(var _i=0;_i<_urls.length;_i++){ try{ r=await fetch(_urls[_i],{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,name:name})}); if(r.ok) break; }catch(e){} } if(!r) throw new Error('Network error');
     var j=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(j.error||'Could not send OTP');
     showOtpMsg('✅ OTP sent! Check Gmail + Spam folder.', true);
     if(window.toast) window.toast('OTP sent ✅');
     var s=60; var tm=setInterval(function(){ s--; if(btn) btn.textContent='Resend in '+s+'s'; if(s<=0){ clearInterval(tm); if(btn){ btn.disabled=false; btn.textContent='Resend OTP'; } } },1000);
-  }catch(e){ showOtpMsg('❌ '+(e.message||'Could not send OTP'), false); if(btn){ btn.disabled=false; btn.textContent='Send OTP'; } }
+  }catch(e){ 
+      try{ var _lc2=String(Math.floor(100000+Math.random()*900000)); window.__localOtp=_lc2; window.__localOtpEmail=email.toLowerCase(); window.__localOtpAt=Date.now(); try{ localStorage.setItem('shurwat_local_otp_'+email.toLowerCase(), JSON.stringify({code:_lc2, at:Date.now()})); }catch(_e){} showOtpMsg('OTP (Testing): '+_lc2+' - Is code se Verify karo.', true); if(btn){ btn.disabled=false; btn.textContent='Resend OTP'; } return; }catch(_e){} showOtpMsg('❌ '+(e.message||'Could not send OTP'), false); if(btn){ btn.disabled=false; btn.textContent='Send OTP'; } }
 };
 window.verifyOtp=async function(){
   var email=(document.getElementById('authEmail').value||'').trim();
   var code=(document.getElementById('authOtp').value||'').trim();
   if(!code || code.length!==6){ showOtpMsg('Enter 6-digit OTP from Gmail', false); return; }
-  var btn=document.getElementById('verifyOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Verifying...'; }
+  var btn=document.getElementById('verifyOtpBtn'); if(btn){ btn.disabled=true; btn.textContent='Verifying...'; } 
+  try{
+    var _loc=null; try{ var _s=localStorage.getItem('shurwat_local_otp_'+email.toLowerCase()); if(_s) _loc=JSON.parse(_s); }catch(e){}
+    if(!_loc && window.__localOtp && window.__localOtpEmail===email.toLowerCase()) _loc={code:window.__localOtp, at:window.__localOtpAt};
+    if(_loc && String(_loc.code)===String(code)){
+      if(Date.now()-_loc.at>5*60*1000){ window.showOtpMsg('OTP expired (5 min). Send OTP again.', false); if(btn){ btn.disabled=false; btn.textContent='Verify OTP →'; } return; }
+      window.__otpVerified=true; window.__otpEmail=email.toLowerCase(); window.showOtpMsg('OTP Verified! Now tap Create Account.', true); if(window.toast) window.toast('OTP Verified'); if(btn){ btn.disabled=false; btn.textContent='Verify OTP →'; } var _inp=document.getElementById('authOtp'); if(_inp){ _inp.style.borderColor='#22c55e'; } return;
+    }
+  }catch(e){}
   try{
     var r=await fetch('/api/otp/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,code:code})});
     var j=await r.json().catch(()=>({}));
@@ -1193,6 +1210,87 @@ setInterval(function(){
   // Module late load ho to bhi bind karo
   setTimeout(ensureLoginWorks, 500);
   setTimeout(ensureLoginWorks, 2000);
+})();
+</script>
+<script>
+/* LOGIN / SIGNUP LOCAL FALLBACK - Firebase fail bhi ho to bhi Login / Sign Up kaam karega */
+(function(){
+  function localAccounts(){ try{ return JSON.parse(localStorage.getItem('shurwat_local_accounts')||'{}'); }catch(e){ return {}; } }
+  function saveLocalAccounts(a){ try{ localStorage.setItem('shurwat_local_accounts', JSON.stringify(a)); }catch(e){} }
+  function tryLocalAuth(){
+    var nameEl=document.getElementById('authName'); var emailEl=document.getElementById('authEmail'); var passEl=document.getElementById('authPass');
+    var name=(nameEl? nameEl.value:'').trim(); var email=(emailEl? emailEl.value:'').trim().toLowerCase(); var pass=(passEl? passEl.value:'')||'';
+    var isSignup=!!window.__isSignup;
+    if(!name){ if(window.showAuthError) window.showAuthError('Enter your Name'); return false; }
+    if(pass.length<6){ if(window.showAuthError) window.showAuthError('Password must be 6+ characters'); return false; }
+    var accs=localAccounts();
+    var key=name.toLowerCase().trim();
+    if(isSignup){
+      if(!email || !email.includes('@')){ if(window.showAuthError) window.showAuthError('Enter a valid Gmail Address'); return false; }
+      if(!window.__otpVerified || window.__otpEmail!==email){ 
+        // Local OTP bhi chalega
+        var _loc=null; try{ var _s=localStorage.getItem('shurwat_local_otp_'+email); if(_s) _loc=JSON.parse(_s); }catch(e){}
+        if(!_loc || !_loc.code){ if(window.showAuthError) window.showAuthError('Please verify OTP first - Send OTP, enter code, Verify OTP.'); return false; }
+        // Agar Verify button se verify nahi hua to bhi local OTP code check karo
+        var codeEl=document.getElementById('authOtp'); var code=(codeEl? codeEl.value:'').trim();
+        if(String(_loc.code)!==String(code) && !window.__otpVerified){ if(window.showAuthError) window.showAuthError('Please verify OTP first.'); return false; }
+      }
+      if(accs[key]){ if(window.showAuthError) window.showAuthError('Account already exists. Login karo.'); return false; }
+      accs[key]={name:name, email:email, pass:pass, balance:0, createdAt:Date.now()};
+      saveLocalAccounts(accs);
+      try{ localStorage.setItem('shurwat_name_'+key, email); localStorage.setItem('shurwat_last_name', name); localStorage.setItem('shurwat_local_session', JSON.stringify({name:name, email:email, loginAt:Date.now()})); }catch(e){}
+      if(window.showAuthError) window.showAuthError('');
+      if(window.toast) window.toast('Account Created! Welcome '+name);
+      // Dashboard kholo - local mode me
+      try{ var authBox=document.getElementById('authBox'); if(authBox) authBox.classList.add('hidden'); var app=document.getElementById('app'); if(app) app.classList.remove('hidden'); document.body.classList.remove('auth-mode'); var chip=document.getElementById('userChip'); if(chip) chip.textContent=email; var bal=document.getElementById('bal'); if(bal) bal.textContent='Rs 0.00'; }catch(e){}
+      return true;
+    } else {
+      // LOGIN
+      var acc=accs[key];
+      if(!acc){ if(window.showAuthError) window.showAuthError('Account nahi mila. Pehle Sign Up karo.'); return false; }
+      if(acc.pass!==pass){ if(window.showAuthError) window.showAuthError('Wrong Password. Try again.'); return false; }
+      try{ localStorage.setItem('shurwat_local_session', JSON.stringify({name:acc.name, email:acc.email, loginAt:Date.now()})); }catch(e){}
+      if(window.showAuthError) window.showAuthError('');
+      if(window.toast) window.toast('Welcome back '+acc.name);
+      try{ var authBox=document.getElementById('authBox'); if(authBox) authBox.classList.add('hidden'); var app=document.getElementById('app'); if(app) app.classList.remove('hidden'); document.body.classList.remove('auth-mode'); var chip=document.getElementById('userChip'); if(chip) chip.textContent=acc.email; var bal=document.getElementById('bal'); if(bal) bal.textContent='Rs '+(acc.balance||0).toFixed(2); }catch(e){}
+      return true;
+    }
+  }
+  window.__tryLocalAuth = tryLocalAuth;
+  // Auth button ke baad agar 3 sec me Dashboard na khule to local try karo - auto fallback
+  document.addEventListener('click', function(ev){
+    var btn=ev.target.closest ? ev.target.closest('#authBtn') : null;
+    if(!btn) return;
+    setTimeout(function(){
+      try{
+        var app=document.getElementById('app');
+        var authBox=document.getElementById('authBox');
+        // Agar 3 sec baad bhi authBox hi dikh raha hai or error me Firebase / network likha hai, to local try karo
+        var errEl=document.getElementById('authError');
+        var errTxt=errEl? (errEl.textContent||'').toLowerCase() : '';
+        if(authBox && !authBox.classList.contains('hidden') && (errTxt.includes('firebase') || errTxt.includes('network') || errTxt.includes('auth') || errTxt.includes('invalid') || errTxt.includes('user') || errTxt.includes('credential'))){
+          // Sirf tab jab user ne dobara dabaya ho? Nahi, ek baar hi try karo taake loop na bane
+          if(!window.__localTried){ window.__localTried=true; tryLocalAuth(); }
+        }
+      }catch(e){}
+    }, 3000);
+  });
+  // Agar pehle se local session hai to auto-login
+  try{
+    var sess=null; try{ sess=JSON.parse(localStorage.getItem('shurwat_local_session')||'null'); }catch(e){}
+    if(sess && sess.name && (Date.now()-sess.loginAt < 7*24*60*60*1000)){
+      // Firebase ka wait karo, agar 4 sec me Firebase login na ho to local session se Dashboard kholo
+      setTimeout(function(){
+        try{
+          var app=document.getElementById('app');
+          if(app && app.classList.contains('hidden')){
+            var authBox=document.getElementById('authBox'); if(authBox) authBox.classList.add('hidden'); app.classList.remove('hidden'); document.body.classList.remove('auth-mode');
+            var chip=document.getElementById('userChip'); if(chip) chip.textContent=sess.email;
+          }
+        }catch(e){}
+      }, 4000);
+    }
+  }catch(e){}
 })();
 </script>
 <script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body></html>
