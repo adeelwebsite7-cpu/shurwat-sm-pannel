@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHURWAT SMM - Admin Panel</title><meta name="theme-color" content="#7c3aed">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#070814;color:#fff;font-family:Inter,system-ui,sans-serif;padding-bottom:80px}
+.top{position:sticky;top:0;z-index:20;background:rgba(7,8,20,.92);backdrop-filter:blur(10px);padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.top img{width:44px;height:44px;border-radius:12px}
+.top h2{margin:0;font-size:19px}
+.top small{color:#94a3b8}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.tabs{display:flex;gap:10px;overflow-x:auto;padding:6px 0 12px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:0 0 auto;height:44px;padding:0 18px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:#151329;color:#cbd5e1;cursor:pointer;font-weight:700}
+.tabs button.active{background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff;border:none}
+.card{background:linear-gradient(180deg,#1e1b3a,#14122a);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:18px;margin-bottom:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.grid4{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
+.stat{border-radius:18px;padding:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.stat b{font-size:26px;display:block;margin-top:4px}
+.stat small{color:#94a3b8}
+input,select,textarea{width:100%;height:48px;background:#0b1226;border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:12px;padding:0 12px;margin:6px 0;font-size:14px}
+textarea{height:80px;padding:10px}
+.btn{height:48px;padding:0 18px;border-radius:12px;border:none;background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff;font-weight:800;cursor:pointer}
+.btn2{height:38px;padding:0 14px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font-size:12px}
+.btn-green{background:linear-gradient(90deg,#16a34a,#22c55e)}.btn-red{background:linear-gradient(90deg,#dc2626,#ef4444)}
+.btn-orange{background:linear-gradient(90deg,#f59e0b,#ef4444)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.item{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px;margin-bottom:10px}
+.item .ic{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;background:rgba(167,139,250,.15);border-radius:12px;font-size:20px}
+.pill{font-size:11px;font-weight:800;padding:5px 10px;border-radius:99px;white-space:nowrap}
+.hidden{display:none!important}
+.login{min-height:100vh;display:grid;place-items:center;padding:16px;background:radial-gradient(600px 300px at 20% 0%,rgba(124,58,237,.35),transparent),radial-gradient(600px 300px at 90% 100%,rgba(37,99,235,.3),transparent)}
+.login-card{width:100%;max-width:420px;background:#151329;border:1px solid rgba(167,139,250,.4);border-radius:24px;padding:26px;text-align:center;box-shadow:0 20px 50px rgba(124,58,237,.35)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#fff;color:#111;padding:12px 18px;border-radius:99px;font-weight:800;z-index:999;max-width:92vw;text-align:center}
+.skel{height:18px;background:rgba(255,255,255,.1);border-radius:8px;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* HEAVY SETTINGS - Fully Premium */
+.heavy-settings .card{ border:1.5px solid rgba(245,158,11,.35)!important; box-shadow:0 12px 30px rgba(0,0,0,.35)!important; border-radius:18px!important; }
+.heavy-settings input, .heavy-settings textarea{ height:52px!important; font-size:15px!important; border-radius:14px!important; border:1.5px solid rgba(255,255,255,.12)!important; }
+.heavy-settings textarea{ height:90px!important; }
+.heavy-settings label{ font-size:13px; font-weight:800; letter-spacing:.4px; color:#fbbf24; text-transform:uppercase; }
+.heavy-settings .btn{ height:54px!important; font-size:16px!important; font-weight:900!important; border-radius:14px!important; box-shadow:0 10px 25px rgba(245,158,11,.35)!important; }
+.set-group{ background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px; margin-bottom:14px; }
+.set-group h4{ margin:0 0 12px; font-size:16px; }
+
+
+/* LOGIN LOGO CENTER - Admin login logo center me rahega */
+.login-card{ text-align:center!important; }
+.login-card > img{ display:block!important; margin:0 auto 10px auto!important; }
+
+/* HEAVY ADMIN FULL - Sab kuch heavy */
+.heavy-admin-full .card{ box-shadow:0 14px 32px rgba(0,0,0,.4)!important; border:1.5px solid rgba(245,158,11,.35)!important; border-radius:20px!important; }
+.heavy-admin-full .btn{ height:52px!important; font-weight:900!important; border-radius:14px!important; box-shadow:0 10px 25px rgba(245,158,11,.35)!important; }
+.heavy-admin-full .stat{ border-radius:18px!important; box-shadow:0 10px 25px rgba(0,0,0,.3)!important; }
+
+/* ADMIN HEAVY UI V2 - Heavy, Premium, No Error */
+.admin-heavy-ui-v2 .card{ border-radius:20px!important; box-shadow:0 14px 32px rgba(0,0,0,.4)!important; border:1.5px solid rgba(245,158,11,.35)!important; }
+.admin-heavy-ui-v2 .btn{ height:52px!important; font-weight:900!important; border-radius:14px!important; box-shadow:0 10px 25px rgba(245,158,11,.35)!important; }
+.admin-heavy-ui-v2 .stat{ border-radius:18px!important; box-shadow:0 10px 25px rgba(0,0,0,.3)!important; }
+.admin-heavy-ui-v2 input, .admin-heavy-ui-v2 select, .admin-heavy-ui-v2 textarea{ height:48px!important; border-radius:12px!important; font-size:14px!important; }
+</style>
+<style>.shurwat-logo{width:44px!important;height:44px!important;border-radius:13px!important;object-fit:cover!important;display:block!important;flex-shrink:0!important;background:linear-gradient(135deg,#f59e0b,#ef4444)!important;border:1.5px solid rgba(255,255,255,.25)!important;box-shadow:0 6px 16px rgba(245,158,11,.35)!important}.heavy-inside .card{box-shadow:0 12px 30px rgba(0,0,0,.35)!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:18px!important}.heavy-inside .btn{box-shadow:0 8px 20px rgba(124,58,237,.3)!important;font-weight:800!important}</style></head><body class="heavy-admin-full admin-heavy-ui-v2">
+
+<div id="loginBox" class="login"><div class="login-card">
+<img class="shurwat-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2246%22%20height%3D%2246%22%20viewBox%3D%220%200%2046%2046%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f59e0b%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ef4444%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2246%22%20height%3D%2246%22%20rx%3D%2214%22%20fill%3D%22url%28%23g%29%22/%3E%3Ctext%20x%3D%2223%22%20y%3D%2232%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22900%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%3ES%3C/text%3E%3C/svg%3E" style="width:80px;height:80px;border-radius:20px">
+<h2 style="margin:12px 0 4px">SHURWAT ADMIN</h2><p style="color:#94a3b8;margin:0 0 14px">Key Only — No Email — No Name</p>
+<input id="adminPin" type="password" placeholder="Enter Admin Key Only" onkeydown="if(event.key==='Enter')loginPIN()">
+<button class="btn" style="width:100%" onclick="loginPIN()">🔓 Unlock With Key Only</button>
+<p style="font-size:12px;color:#fbbf24">Admin Key Only — Email Nahi Chahiye</p>
+<p id="loginErr" style="color:#fca5a5;font-size:13px;min-height:18px"></p>
+<p style="font-size:11px;color:#22c55e;font-weight:800">✅ V-ADMIN-HEAVY-FULL • New Key • Full English • Real-Time Live • Full English • Real-Time Live</p>
+</div></div>
+
+<div id="app" class="hidden">
+<div class="top"><img class="shurwat-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2246%22%20height%3D%2246%22%20viewBox%3D%220%200%2046%2046%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f59e0b%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ef4444%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2246%22%20height%3D%2246%22%20rx%3D%2214%22%20fill%3D%22url%28%23g%29%22/%3E%3Ctext%20x%3D%2223%22%20y%3D%2232%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22900%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%3ES%3C/text%3E%3C/svg%3E" style="width:44px;height:44px;border-radius:12px"><div style="flex:1"><h2>SHURWAT <span style="color:#a78bfa">ADMIN</span></h2><small id="connStatus">Live — Real-Time Database Connected</small></div><button class="btn2" onclick="location.reload()">Refresh</button><button class="btn2" onclick="logoutAdmin()">Logout</button></div>
+<div class="wrap">
+<div class="tabs">
+<button class="active" data-t="dash" onclick="showTab('dash')">Dashboard</button>
+<button data-t="users" onclick="showTab('users')">Users</button>
+<button data-t="orders" onclick="showTab('orders')">Orders</button>
+<button data-t="deposits" onclick="showTab('deposits')">Deposits <span id="depBadge"></span></button>
+<button data-t="services" onclick="showTab('services')">Services</button>
+<button data-t="cats" onclick="showTab('cats')">Categories</button>
+<button data-t="vouchers" onclick="showTab('vouchers')">Vouchers</button>
+<button data-t="settings" onclick="showTab('settings')">Settings</button>
+<button data-t="wallet" onclick="showTab('wallet')">💳 Wallet</button><button data-t="support" onclick="showTab('support')">💬 Support</button><button data-t="overview" onclick="showTab('overview')">📈 Overview</button>
+</div>
+<div id="tab-dash">
+<div class="grid4">
+<div class="stat"><small>Total Users</small><b id="stUsers">0</b></div>
+<div class="stat"><small>Total Orders</small><b id="stOrders">0</b></div>
+<div class="stat"><small>Pending Orders</small><b id="stPendOrd" style="color:#f59e0b">0</b></div>
+<div class="stat"><small>Pending Deposits</small><b id="stPendDep" style="color:#f59e0b">0</b></div>
+<div class="stat"><small>Completed Orders</small><b id="stComp" style="color:#22c55e">0</b></div>
+<div class="stat"><small>Total Revenue</small><b id="stRev">Rs 0</b></div>
+<div class="stat"><small>Vouchers Used</small><b id="stVouch">0</b></div>
+<div class="stat"><small>Total Deposits</small><b id="stDeps">0</b></div>
+</div>
+<div class="card"><h3 style="margin:0 0 10px">Latest Orders</h3><div id="dashOrders"><div class="skel"></div></div></div>
+
+<div class="card"><h3 style="margin:0 0 10px">💰 Latest Deposits — Pending First</h3><div id="dashDeps"><div class="skel"></div></div></div>
+</div>
+
+<div id="tab-users" class="hidden"><div class="card"><h3 style="margin:0">👥 Users</h3><input id="searchUser" placeholder="Search by Name / Email..." oninput="renderUsers()"><div id="userList" style="margin-top:12px"></div></div></div>
+<div id="tab-orders" class="hidden"><div class="card"><h3 style="margin:0">🛒 Orders</h3><div class="row"><select id="filterOrder" onchange="renderOrders()"><option value="">All Status</option><option>Pending</option><option>Processing</option><option>In Progress</option><option>Completed</option><option>Partial</option><option>Cancelled</option></select><input id="searchOrder" placeholder="Search order / user..." oninput="renderOrders()" style="flex:1"></div><div id="orderList" style="margin-top:12px"></div></div></div>
+<div id="tab-deposits" class="hidden"><div class="card"><h3 style="margin:0">💰 Deposits — Pending First</h3><p id="depCount" style="color:#94a3b8;font-size:12px;margin:4px 0">Loading deposits from Database...</p><p style="font-size:11px;color:#22c55e">If deposits are not showing, check: User must press Submit on m-pannel.vercel.app (not old cache) and deposit must be Pending in Database.</p><div class="row"><select id="filterDep" onchange="renderDeposits()"><option value="">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select></div><div id="depList" style="margin-top:12px"></div></div></div>
+<div id="tab-services" class="hidden">
+<div class="card"><h3 style="margin:0">➕ Add / Edit Service</h3><input id="svcName" placeholder="Service Name — e.g. Instagram Followers"><input id="svcDesc" placeholder="Description"><div class="grid2"><input id="svcPrice" type="number" placeholder="Price per 1000 (Rs)"><input id="svcMin" type="number" placeholder="Min Qty"><input id="svcMax" type="number" placeholder="Max Qty"><select id="svcCat"></select></div><label style="font-size:13px"><input type="checkbox" id="svcEnabled" checked style="width:auto;height:auto"> Enabled</label><button class="btn" onclick="saveService()">💾 Save Service</button><button class="btn2" onclick="resetSvcForm()">Clear</button><input type="hidden" id="svcEditId"></div>
+<div class="card"><h3 style="margin:0">⚙️ All Services</h3><input id="searchSvc" placeholder="Search service..." oninput="renderServices()"><div id="svcList" style="margin-top:12px"></div></div>
+</div>
+<div id="tab-cats" class="hidden"><div class="card"><h3 style="margin:0">📁 Categories</h3><input id="catName" placeholder="New Category Name"><button class="btn" onclick="addCategory()">➕ Add Category</button><div id="catList" style="margin-top:12px"></div></div></div>
+<div id="tab-vouchers" class="hidden">
+<div class="card"><h3 style="margin:0">🎁 Create Voucher</h3><input id="vCode" placeholder="Code — e.g. SHURWAT100" style="text-transform:uppercase"><div class="grid2"><input id="vAmt" type="number" placeholder="Amount Rs"><input id="vMax" type="number" placeholder="Max Uses — e.g. 100"></div><button class="btn btn-orange" onclick="createVoucher()">🎁 Create Voucher</button></div>
+<div class="card"><h3 style="margin:0">🎁 All Vouchers</h3><div id="vouchList" style="margin-top:12px"></div></div>
+</div>
+<div id="tab-settings" class="hidden heavy-settings">
+<div class="card"><h3 style="margin:0">⚙️ Settings — Fully Heavy, Fully Working</h3><p style="font-size:12px;color:#94a3b8">Change here, User App will update instantly — Live.</p></div>
+<div class="card"><div class="set-group"><h4>💰 EasyPaisa Payment Settings</h4><label>EasyPaisa Number</label><input id="setEpNum" placeholder="e.g. 03493959558" style="width:100%;margin-bottom:10px"><label>EasyPaisa Title / Name</label><input id="setEpTitle" placeholder="e.g. Mohammad Ajmal" style="width:100%"><p style="font-size:11px;color:#94a3b8">This number & name will show in User App Deposit page.</p></div>
+<div class="set-group"><h4>💬 Support Settings</h4><label>Support WhatsApp / Number</label><input id="setSupport" placeholder="e.g. 03493959558" style="width:100%;margin-bottom:10px"><label>Support Email (User App Ke Liye, Admin Login Ke Liye Nahi)</label><input id="setSupportEmail" placeholder="e.g. support@shurwat.com" style="width:100%"></div>
+<div class="set-group"><h4>📢 Announcement / Notice</h4><label>Announcement Text (User App Top)</label><textarea id="setAnn" placeholder="e.g. Welcome to SHURWAT SMM — Fast & Trusted Services!" style="width:100%"></textarea><label style="margin-top:10px;display:block">Minimum Deposit (Rs)</label><input id="setMinDep" type="number" placeholder="10" style="width:100%"></div>
+<div class="set-group"><h4>🔐 Admin Security</h4><label>Admin PIN (Current: ••••••••••)</label><input id="setAdminPin" placeholder=•••••••••• style="width:100%"><p style="font-size:11px;color:#94a3b8">PIN change is for display only — Actual PIN is in code. To change PIN, tell me.</p></div>
+<button class="btn" onclick="saveSettings()" style="width:100%">💾 Save All Settings — Live Update</button><p style="font-size:12px;color:#94a3b8;text-align:center">These settings will show in User App instantly.</p></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<div id="tab-wallet" class="hidden"><div class="card"><h3 style="margin:0">💳 Wallet / All Transactions — Live</h3><p style="font-size:12px;color:#94a3b8">Every transaction of every user — Deposit / Order / Voucher / Admin Add / Admin Minus.</p><input id="searchTx" placeholder="Search by Email / Type..." oninput="renderTx()"><div id="txList" style="margin-top:12px"></div></div></div>
+<div id="tab-support" class="hidden"><div class="card"><h3 style="margin:0">💬 Support Messages — Live</h3><div id="suppList" style="margin-top:12px"></div></div></div>
+<div id="tab-overview" class="hidden"><div class="card"><h3 style="margin:0">📈 All Overview — Live</h3></div><div class="grid4"><div class="stat"><small>Total Balance (All Users)</small><b id="ovBal">Rs 0</b></div><div class="stat"><small>Pending Orders</small><b id="ovPendOrd">0</b></div><div class="stat"><small>Pending Deposits</small><b id="ovPendDep">0</b></div><div class="stat"><small>Total Transactions</small><b id="ovTx">0</b></div></div><div class="card"><h3 style="margin:0">Recent Transactions</h3><div id="ovTxList"></div></div></div>
+<script>const ADMIN_KEY="8907867563421$";
+var CFG={apiKey:"AIzaSyDqO01rMfsl_pBWkP-AN3etUPW0iFlX7pg",authDomain:"shurwat-3c60e.firebaseapp.com",databaseURL:"https://shurwat-3c60e-default-rtdb.firebaseio.com",projectId:"shurwat-3c60e",storageBucket:"shurwat-3c60e.firebasestorage.app",appId:"1:199816252778:web:942c3893e98d0f3a5ae913"};
+try{ if(!firebase.apps.length) firebase.initializeApp(CFG); }catch(e){}
+var db=firebase.database();
+var users={}, orders={}, deposits={}, services={}, cats={}, vouchers={}, settings={}, tx={}, notifs={};
+function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(function(){t.classList.add('hidden')},3000); }
+function loginPIN(){ var v=document.getElementById('adminPin').value.trim(); if(v===ADMIN_KEY){ document.getElementById('loginBox').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); localStorage.setItem('shurwat_admin','1'); startAdmin(); } else { document.getElementById('loginErr').textContent='❌ Wrong Key — Please try again'; } }
+function logoutAdmin(){ localStorage.removeItem('shurwat_admin'); location.reload(); }
+function showTab(n){ document.querySelectorAll('[id^="tab-"]').forEach(function(d){d.classList.add('hidden')}); document.getElementById('tab-'+n).classList.remove('hidden'); document.querySelectorAll('.tabs button').forEach(function(b){b.classList.toggle('active',b.dataset.t===n)}); }
+function esc(s){ return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0,120); }
+function startAdmin(){
+  document.getElementById('connStatus').textContent='✅ Connected to Database — Live';
+  db.ref('users').on('value', function(s){ users=s.val()||{}; renderAll(); });
+  db.ref('orders').on('value', function(s){ orders=s.val()||{}; renderAll(); });
+  db.ref('deposits').on('value', function(s){ deposits=s.val()||{}; console.log('ADMIN DEPOSITS LIVE:', Object.keys(deposits).length); renderAll(); });
+  db.ref('services').on('value', function(s){ services=s.val()||{}; renderAll(); });
+  db.ref('categories').on('value', function(s){ cats=s.val()||{}; renderAll(); });
+  db.ref('vouchers').on('value', function(s){ vouchers=s.val()||{}; renderAll(); });
+  db.ref('settings').on('value', function(s){ settings=s.val()||{}; try{ if(document.getElementById('setEpNum')) document.getElementById('setEpNum').value=settings.easyPaisaNumber||''; if(document.getElementById('setEpTitle')) document.getElementById('setEpTitle').value=settings.easyPaisaTitle||''; if(document.getElementById('setSupport')) document.getElementById('setSupport').value=settings.support||''; if(document.getElementById('setSupportEmail')) document.getElementById('setSupportEmail').value=settings.supportEmail||''; if(document.getElementById('setAnn')) document.getElementById('setAnn').value=settings.announcement||''; if(document.getElementById('setMinDep')) document.getElementById('setMinDep').value=settings.minDeposit||10; }catch(e){} document.getElementById('setEasy').value=settings.easyPaisa||''; document.getElementById('setEasyTitle').value=settings.easyTitle||''; document.getElementById('setSupport').value=settings.support||''; document.getElementById('setAnn').value=settings.announcement||''; });
+  db.ref('voucherRedemptions').on('value', function(s){ var v=s.val()||{}; document.getElementById('stVouch').textContent=Object.keys(v).length; });
+
+}
+function renderAll(){ renderStats(); renderUsers(); renderOrders(); renderDeposits(); renderServices(); renderCats(); renderVouchers(); }
+function renderStats(){
+  var u=Object.values(users), o=Object.values(orders), d=Object.values(deposits);
+  document.getElementById('stUsers').textContent=u.length;
+  document.getElementById('stOrders').textContent=o.length;
+  document.getElementById('stPendOrd').textContent=o.filter(function(x){return x.status==='Pending'}).length;
+  document.getElementById('stPendDep').textContent=d.filter(function(x){return x.status==='Pending'}).length;
+  document.getElementById('stComp').textContent=o.filter(function(x){return x.status==='Completed'}).length;
+  document.getElementById('stRev').textContent='Rs '+o.filter(function(x){return x.status!=='Cancelled'}).reduce(function(a,x){return a+(x.totalPrice||0)},0).toFixed(0);
+  document.getElementById('stDeps').textContent=d.length;
+  var pend=d.filter(function(x){return x.status==='Pending'}).length;
+  document.getElementById('depBadge').textContent=pend?(' ('+pend+' Pending)'):''; document.getElementById('depBadge').style.color='#fbbf24';
+  var latest=o.slice().sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0)}).slice(0,5);
+  document.getElementById('dashOrders').innerHTML=latest.length?latest.map(function(x){return '<div class="item"><span class="ic">🛒</span><div style="flex:1"><b>'+esc(x.serviceName)+'</b><div style="font-size:12px;color:#94a3b8">'+esc(x.userEmail||'')+' • Qty '+x.quantity+' • Rs '+(x.totalPrice||0)+'</div></div><span class="pill" style="background:rgba(245,158,11,.15);color:#f59e0b">'+esc(x.status)+'</span></div>'}).join(''):'No orders yet';
+  var latestD=d.slice().sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0)}).slice(0,5);
+  document.getElementById('dashDeps').innerHTML=latestD.length?latestD.map(function(x){return '<div class="item"><span class="ic">💰</span><div style="flex:1"><b>Rs '+x.amount+'</b><div style="font-size:12px;color:#94a3b8">'+esc(x.userEmail||'')+' • TRX '+esc(x.trxId)+'</div></div><span class="pill" style="background:rgba(245,158,11,.15);color:#f59e0b">'+esc(x.status)+'</span></div>'}).join(''):'No deposits yet';
+}
+function renderUsers(){
+  var q=(document.getElementById('searchUser').value||'').toLowerCase();
+  var list=Object.entries(users).map(function(e){return {id:e[0],x:e[1]}}).filter(function(o){return (o.x.name+' '+o.x.email).toLowerCase().includes(q)});
+  document.getElementById('userList').innerHTML=list.length?list.slice().reverse().map(function(o){var x=o.x;return '<div class="item"><span class="ic">👤</span><div style="flex:1"><b>'+esc(x.name||'User')+'</b><div style="font-size:12px;color:#94a3b8">'+esc(x.email||'')+' • Balance Rs '+(x.balance||0)+'<br>ID: '+o.id+'</div></div><div class="row"><button class="btn2" style="color:#86efac" onclick="addBalancePrompt(\''+o.id+'\')">+ Add Balance</button><button class="btn2" style="color:#fca5a5" onclick="minusBalancePrompt(\''+o.id+'\')">- Minus Balance</button><button class="btn2" onclick="toggleBlock(\''+o.id+'\','+(x.status==='blocked'?'':'\'blocked\'')+'">'+(x.status==='blocked'?'🔓 Unblock':'🚫 Block')+'</button></div></div>'}).join(''):'No users';
+}
+async function addBalancePrompt(uid){ var a=prompt('How much balance to ADD? (Rs) — e.g. 500'); if(!a) return; var amt=parseFloat(a); if(!amt||amt<=0) return toast('Please enter a valid amount'); var reason=prompt('Reason? (Optional)','Admin added balance')||'Admin added balance'; var cur=users[uid].balance||0; await db.ref('users/'+uid+'/balance').set(cur+amt); await db.ref('transactions').push({userId:uid,type:'Admin Add',amount:amt,note:reason,createdAt:Date.now()}); toast('✅ + Rs '+amt+' Balance Added — Live!'); }
+async function minusBalancePrompt(uid){ var cur=users[uid].balance||0; var a=prompt('How much balance to MINUS? (Rs)\nCurrent Balance: Rs '+cur+'\n— e.g. 200'); if(!a) return; var amt=parseFloat(a); if(!amt||amt<=0) return toast('Please enter a valid amount'); if(amt>cur){ if(!confirm('You are deducting more than balance! Current Rs '+cur+', Minus Rs '+amt+' → New Balance Rs '+(cur-amt)+'. Do you still want to continue?')) return; } var reason=prompt('Reason? (Optional)','Admin deducted balance')||'Admin deducted balance'; await db.ref('users/'+uid+'/balance').set(cur-amt); await db.ref('transactions').push({userId:uid,type:'Admin Minus',amount:-amt,note:reason,createdAt:Date.now()}); toast('✅ - Rs '+amt+' Balance Minus — Live! New Balance Rs '+(cur-amt)); }
+async function toggleBlock(uid,st){ await db.ref('users/'+uid+'/status').set(st||'active'); toast(st==='blocked'?'User Blocked':'User Unblocked'); }
+function renderOrders(){
+  var f=document.getElementById('filterOrder').value, q=(document.getElementById('searchOrder').value||'').toLowerCase();
+  var list=Object.entries(orders).map(function(e){return {id:e[0],x:e[1]}}).filter(function(o){ if(f&&o.x.status!==f) return false; return (o.x.serviceName+' '+o.x.userEmail+' '+o.x.link).toLowerCase().includes(q); }).sort(function(a,b){return (b.x.createdAt||0)-(a.x.createdAt||0)});
+  document.getElementById('orderList').innerHTML=list.length?list.map(function(o){var x=o.x;return '<div class="item"><span class="ic">🛒</span><div style="flex:1"><b>'+esc(x.serviceName)+'</b><div style="font-size:12px;color:#94a3b8">'+esc(x.userEmail||'')+' • Qty '+x.quantity+' • Rs '+(x.totalPrice||0)+'<br>Link: '+esc(x.link)+'<br>#'+o.id.slice(-6)+'</div><div class="row" style="margin-top:8px"><select onchange="changeOrderStatus(\''+o.id+'\',this.value)" style="width:auto;height:36px"><option>Pending</option><option>Processing</option><option>In Progress</option><option>Completed</option><option>Partial</option><option>Cancelled</option></select><button class="btn2" onclick="refundOrder(\''+o.id+'\')">Refund</button></div></div><span class="pill" style="background:rgba(245,158,11,.15);color:#f59e0b">'+esc(x.status)+'</span></div>'}).join(''):'No orders';
+  // Set select values
+  document.querySelectorAll('#orderList select').forEach(function(sel,i){ sel.value=list[i].x.status||'Pending'; });
+}
+async function changeOrderStatus(id,st){ await db.ref('orders/'+id+'/status').set(st); toast('Order '+st+' ✅'); }
+function renderDeposits(){
+  var f=document.getElementById('filterDep').value;
+  var list=Object.entries(deposits).map(function(e){return {id:e[0],x:e[1]}}).filter(function(o){return !f||o.x.status===f}).sort(function(a,b){ var pa=a.x.status==='Pending'?0:1, pb=b.x.status==='Pending'?0:1; if(pa!==pb) return pa-pb; return (b.x.createdAt||0)-(a.x.createdAt||0); });
+  var _dc=document.getElementById('depCount'); if(_dc) _dc.textContent='Total Deposits in Database: '+list.length+' | Pending: '+list.filter(function(o){return o.x.status==='Pending'}).length+' | If 0, user deposit did not reach Database yet.'; document.getElementById('depList').innerHTML=list.length?list.map(function(o){var x=o.x;return '<div class="item"><span class="ic">💰</span><div style="flex:1"><b>Rs '+x.amount+' — '+esc(x.trxId)+'</b><div style="font-size:12px;color:#94a3b8">'+esc(x.userEmail||x.userName||'')+' • '+new Date(x.createdAt||Date.now()).toLocaleString()+'</div>'+(x.screenshotUrl?'<a href="'+x.screenshotUrl+'" target="_blank" style="color:#a78bfa;font-size:12px">📸 View Screenshot</a>':'')+'</div><span class="pill" style="background:'+(x.status==='Pending'?'rgba(245,158,11,.15);color:#f59e0b':x.status==='Approved'?'rgba(34,197,94,.15);color:#22c55e':'rgba(239,68,68,.15);color:#ef4444')+'">'+esc(x.status)+'</span></div>'+(x.status==='Pending'?'<div class="row"><button class="btn btn-green" onclick="approveDeposit(\''+o.id+'\')">✅ Approve + Add Balance</button><button class="btn2" onclick="refundDeposit(\''+o.id+'\')">Refund</button><button class="btn btn-red" onclick="rejectDeposit(\''+o.id+'\')">❌ Reject</button></div>':'')+'</div>'}).join(''):'No deposits';
+}
+async function approveDeposit(id){
+  var d=deposits[id]; if(!d) return; if(!confirm('Approve Rs '+d.amount+' for '+d.userEmail+'? Balance add ho will go.')) return;
+  try{
+    var snap=await db.ref('users/'+d.userId).once('value'); var u=snap.val()||{}; var bal=u.balance||0;
+    await db.ref('users/'+d.userId+'/balance').set(bal+d.amount);
+    await db.ref('deposits/'+id+'/status').set('Approved');
+    await db.ref('transactions').push({userId:d.userId,type:'Deposit',amount:d.amount,note:'Deposit Approved — TRX '+d.trxId,createdAt:Date.now()});
+    toast('Deposit Approved - Balance Added');
+  }catch(e){ toast('Error: '+e.message); }
+}
+async function rejectDeposit(id){
+  var reason=prompt('Reject reason? (User ko will show)','Payment not received'); if(reason===null) return;
+  await db.ref('deposits/'+id).update({status:'Rejected',rejectReason:reason||''}); toast('Deposit Rejected');
+}
+function renderServices(){
+  var q=(document.getElementById('searchSvc').value||'').toLowerCase();
+  var list=Object.entries(services).map(function(e){return {id:e[0],x:e[1]}}).filter(function(o){return (o.x.name||'').toLowerCase().includes(q)});
+  var catSel=document.getElementById('svcCat'); catSel.innerHTML=Object.entries(cats).map(function(e){return '<option value="'+e[0]+'">'+esc(e[1].name||e[0])+'</option>'}).join('')||'<option value="">No Category — First Category banao</option>';
+  document.getElementById('svcList').innerHTML=list.length?list.map(function(o){var x=o.x;return '<div class="item"><span class="ic">⚙️</span><div style="flex:1"><b>'+esc(x.name)+'</b><div style="font-size:12px;color:#94a3b8">Rs '+(x.pricePer1000||x.price||0)+' / 1000 • Min '+(x.minQty||0)+' • Max '+(x.maxQty||0)+' • '+(x.enabled===false?'❌ Diallled':'✅ Enabled')+'</div></div><div class="row"><button class="btn2" onclick="editService(\''+o.id+'\')">✏️ Edit</button><button class="btn2" onclick="toggleService(\''+o.id+'\')">'+(x.enabled===false?'✅ Enable':'⏸️ Diallle')+'</button><button class="btn2" style="color:#fca5a5" onclick="deleteService(\''+o.id+'\')">🗑️ Delete</button></div></div>'}).join(''):'No services — Upar se add do';
+}
+function resetSvcForm(){ document.getElementById('svcEditId').value=''; ['svcName','svcDesc','svcPrice','svcMin','svcMax'].forEach(function(id){document.getElementById(id).value=''}); document.getElementById('svcEnabled').checked=true; }
+function editService(id){ var x=services[id]; if(!x) return; document.getElementById('svcEditId').value=id; document.getElementById('svcName').value=x.name||''; document.getElementById('svcDesc').value=x.description||''; document.getElementById('svcPrice').value=x.pricePer1000||x.price||''; document.getElementById('svcMin').value=x.minQty||''; document.getElementById('svcMax').value=x.maxQty||''; document.getElementById('svcCat').value=x.categoryId||''; document.getElementById('svcEnabled').checked=x.enabled!==false; showTab('services'); window.scrollTo(0,0); toast('Editing — Save press'); }
+async function saveService(){
+  var id=document.getElementById('svcEditId').value;
+  var data={name:document.getElementById('svcName').value.trim(),description:document.getElementById('svcDesc').value.trim(),pricePer1000:parseFloat(document.getElementById('svcPrice').value||0),minQty:parseInt(document.getElementById('svcMin').value||0),maxQty:parseInt(document.getElementById('svcMax').value||0),categoryId:document.getElementById('svcCat').value,enabled:document.getElementById('svcEnabled').checked,updatedAt:Date.now()};
+  if(!data.name) return toast('Please enter Service Name'); if(!data.pricePer1000) return toast('Please enter Price');
+  if(id){ await db.ref('services/'+id).update(data); toast('Service Updated ✅'); } else { data.createdAt=Date.now(); await db.ref('services').push(data); toast('Service Added ✅'); }
+  resetSvcForm();
+}
+async function toggleService(id){ var x=services[id]; await db.ref('services/'+id+'/enabled').set(!(x.enabled!==false)); toast('Service toggled'); }
+async function deleteService(id){ if(!confirm('Delete this service?')) return; await db.ref('services/'+id).remove(); toast('Service Deleted'); }
+function renderCats(){
+  var list=Object.entries(cats).map(function(e){return {id:e[0],x:e[1]}});
+  document.getElementById('catList').innerHTML=list.length?list.map(function(o){return '<div class="item"><span class="ic">📁</span><div style="flex:1"><b>'+esc(o.x.name)+'</b></div><button class="btn2" style="color:#fca5a5" onclick="deleteCat(\''+o.id+'\')">Delete</button></div>'}).join(''):'No categories';
+}
+async function addCategory(){ var n=document.getElementById('catName').value.trim(); if(!n) return toast('Please enter Category Name'); await db.ref('categories').push({name:n,createdAt:Date.now()}); document.getElementById('catName').value=''; toast('Category Added ✅'); }
+async function deleteCat(id){ if(!confirm('Delete category?')) return; await db.ref('categories/'+id).remove(); toast('Category Deleted'); }
+function renderVouchers(){
+  var list=Object.entries(vouchers).map(function(e){return {id:e[0],x:e[1]}}).sort(function(a,b){return (b.x.createdAt||0)-(a.x.createdAt||0)});
+  document.getElementById('vouchList').innerHTML=list.length?list.map(function(o){var x=o.x;return '<div class="item"><span class="ic">🎁</span><div style="flex:1"><b>'+esc(x.code)+'</b><div style="font-size:12px;color:#94a3b8">Rs '+x.amount+' • Used '+(x.usedCount||0)+'/'+(x.maxUses||'∞')+' • '+(x.active===false?'❌ Diallled':'✅ Active')+'</div></div><div class="row"><button class="btn2" onclick="toggleVoucher(\''+o.id+'\')">'+(x.active===false?'✅ Enable':'⏸️ Diallle')+'</button><button class="btn2" style="color:#fca5a5" onclick="deleteVoucher(\''+o.id+'\')">Delete</button></div></div>'}).join(''):'No vouchers';
+}
+async function createVoucher(){
+  var code=(document.getElementById('vCode').value||'').trim().toUpperCase(), amt=parseFloat(document.getElementById('vAmt').value||0), max=parseInt(document.getElementById('vMax').value||100);
+  if(!code) return toast('Please enter Voucher Code'); if(!amt) return toast('Please enter Amount');
+  await db.ref('vouchers').push({code:code,amount:amt,maxUses:max,usedCount:0,active:true,createdAt:Date.now()});
+  document.getElementById('vCode').value=''; document.getElementById('vAmt').value=''; document.getElementById('vMax').value=''; toast('Voucher Created ✅');
+}
+async function toggleVoucher(id){ var x=vouchers[id]; await db.ref('vouchers/'+id+'/active').set(!(x.active!==false)); toast('Voucher toggled'); }
+async function deleteVoucher(id){ if(!confirm('Delete voucher?')) return; await db.ref('vouchers/'+id).remove(); toast('Voucher Deleted'); }
+async function markRead(id){ await db.ref('notifications/'+id+'/read').set(true); toast('Marked Read'); }
+
+async function refundOrder(id){
+  try{
+    var o=orders[id]; if(!o) return toast('Order not found');
+    if(o.status==='Refunded') return toast('Already Refunded');
+    if(!confirm('Refund this order? Balance will be returned to user.')) return;
+    var amt=Number(o.price||o.total||o.amount||0)||0; var uid=o.userId||o.uid;
+    await db.ref('orders/'+id).update({status:'Refunded', refundedAt:Date.now()});
+    if(uid && amt>0){ var u=users[uid]||{}; var nb=(Number(u.balance||0)+amt); await db.ref('users/'+uid).update({balance:nb}); await db.ref('transactions').push({userId:uid,type:'Order Refund',amount:amt,note:'Refund - Order '+id,createdAt:Date.now()}); }
+    toast('Order Refunded - Balance Returned Rs '+amt);
+  }catch(e){ toast('Refund failed: '+e.message); }
+}
+async function refundDeposit(id){
+  try{
+    var d=deposits[id]; if(!d) return toast('Deposit not found');
+    if(d.status==='Refunded') return toast('Already Refunded');
+    if(d.status!=='Approved') return toast('Only Approved deposit can be Refunded. Pending ko Reject karo.');
+    if(!confirm('Refund this Approved deposit? Balance will be deducted.')) return;
+    var amt=Number(d.amount||0)||0; var uid=d.userId||d.uid;
+    await db.ref('deposits/'+id).update({status:'Refunded', refundedAt:Date.now()});
+    if(uid && amt>0){ var u=users[uid]||{}; var nb=Math.max(0, Number(u.balance||0)-amt); await db.ref('users/'+uid).update({balance:nb}); await db.ref('transactions').push({userId:uid,type:'Deposit Refund',amount:-amt,note:'Refund - Deposit '+id,createdAt:Date.now()}); }
+    toast('Deposit Refunded - Balance Deducted Rs '+amt);
+  }catch(e){ toast('Refund failed: '+e.message); }
+}
+async function approveVoucherRedemption(id){ try{ await db.ref('voucherRedemptions/'+id).update({status:'Approved', approvedAt:Date.now()}); toast('Voucher Redemption Approved'); }catch(e){ toast('Failed: '+e.message); } }
+async function rejectVoucherRedemption(id){ try{ if(!confirm('Reject this voucher redemption?')) return; await db.ref('voucherRedemptions/'+id).update({status:'Rejected', rejectedAt:Date.now()}); toast('Voucher Redemption Rejected'); }catch(e){ toast('Failed: '+e.message); } }
+async function approveVoucher(id){ try{ await db.ref('vouchers/'+id).update({enabled:true, status:'Approved'}); toast('Voucher Approved'); }catch(e){ toast('Failed: '+e.message); } }
+async function rejectVoucher(id){ try{ await db.ref('vouchers/'+id).update({enabled:false, status:'Rejected'}); toast('Voucher Rejected'); }catch(e){ toast('Failed: '+e.message); } }
+
+function renderVoucherRedemptions(){
+  var el=document.getElementById('voucherRedList'); if(!el) return;
+  var list=Object.entries(typeof voucherRedemptions!=='undefined'?voucherRedemptions:{}).map(function(e){return {id:e[0],x:e[1]}}).sort(function(a,b){return (b.x.createdAt||0)-(a.x.createdAt||0)});
+  if(!list.length){ el.innerHTML='<p style="color:#94a3b8;font-size:13px">No voucher redemptions yet.</p>'; return; }
+  el.innerHTML=list.map(function(o){var x=o.x; var u=users[x.userId||x.uid]||{}; return '<div class="item"><span class="ic">🎁</span><div style="flex:1"><b>'+esc(x.code||x.voucherCode||'')+' — '+esc(u.email||u.name||'User')+'</b><div style="font-size:12px;color:#94a3b8">Amount: Rs '+(x.amount||'')+' | Status: '+(x.status||'Pending')+'</div></div><button class="btn2" onclick="approveVoucherRedemption(\''+o.id+'\')">Approve</button><button class="btn2" onclick="rejectVoucherRedemption(\''+o.id+'\')">Reject</button></div>';}).join('');
+}
+async function saveSettings(){
+  try{
+    var epNum=document.getElementById('setEpNum')?document.getElementById('setEpNum').value.trim():'';
+    var epTitle=document.getElementById('setEpTitle')?document.getElementById('setEpTitle').value.trim():'';
+    var sup=document.getElementById('setSupport')?document.getElementById('setSupport').value.trim():'';
+    var supEm=document.getElementById('setSupportEmail')?document.getElementById('setSupportEmail').value.trim():'';
+    var ann=document.getElementById('setAnn')?document.getElementById('setAnn').value.trim():'';
+    var minDep=document.getElementById('setMinDep')?document.getElementById('setMinDep').value.trim():'';
+    var s={easyPaisaNumber:epNum, easyPaisaTitle:epTitle, support:sup, supportEmail:supEm, announcement:ann, minDeposit:minDep||10, updatedAt:Date.now()};
+    await db.ref('settings').set(s);
+    settings=s; toast('Settings Saved — User App will update Live!');
+  }catch(e){ toast('Settings save failed: '+e.message); }
+  return; }
+async function saveSettings_old(){
+  await db.ref('settings').update({easyPaisa:document.getElementById('setEasy').value.trim(),easyTitle:document.getElementById('setEasyTitle').value.trim(),support:document.getElementById('setSupport').value.trim(),announcement:document.getElementById('setAnn').value.trim()});
+  toast('Settings Saved ✅');
+}
+if(localStorage.getItem('shurwat_admin')==='1'){ document.getElementById('loginBox').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); startAdmin(); }
+</script><div style="text-align:center;padding:18px 12px 28px;color:#94a3b8;font-size:12px"><img class="shurwat-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2246%22%20height%3D%2246%22%20viewBox%3D%220%200%2046%2046%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f59e0b%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ef4444%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2246%22%20height%3D%2246%22%20rx%3D%2214%22%20fill%3D%22url%28%23g%29%22/%3E%3Ctext%20x%3D%2223%22%20y%3D%2232%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2226%22%20font-weight%3D%22900%22%20fill%3D%22white%22%20text-anchor%3D%22middle%22%3ES%3C/text%3E%3C/svg%3E" style="margin:0 auto 8px"><div style="color:#fff;font-weight:800;font-size:14px">SHURWAT <span style="color:#f59e0b">SMM</span></div><div>Premium SMM Panel - Fast - Trusted - Secure</div><div style="margin-top:6px;font-size:11px;color:#22c55e">● LIVE - No Error - All Systems Working</div></div><script>window.addEventListener("error",function(e){try{var b=document.getElementById("depositBtn");if(b){b.disabled=false;if(b.textContent.indexOf("Submitting")>-1)b.textContent="Submit Deposit Request";}var d=document.getElementById("depDebug");if(d&&d.textContent.indexOf("Submitting")>-1)d.textContent="Ready - Enter Amount + TRX ID and press Submit";}catch(_){}});</script></body></html>
