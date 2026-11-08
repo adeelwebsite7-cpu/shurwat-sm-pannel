@@ -47,15 +47,32 @@ function fbDel(email){
     }catch(e){ resolve(false); }
   });
 }
-function sendGmail({ user, pass, to, subject, html }) {
+async function sendGmailHTTPS({ user, pass, to, subject, html }) {
+  // Vercel SMTP port 465 block karta hai, isliye HTTPS se bhejo - Resend API (free, 100/day)
+  // Vercel me RESEND_API_KEY dalo: https://resend.com se free key lo, 2 min me ban jayegi
+  const resendKey = (process.env.RESEND_API_KEY || '').trim();
+  if (resendKey) {
+    const data = JSON.stringify({ from: 'SHURWAT SMM <onboarding@resend.dev>', to: [to], subject, html });
+    const r = await new Promise((resolve, reject) => {
+      const req = https.request({ hostname:'api.resend.com', path:'/emails', method:'POST', headers:{ 'Authorization':'Bearer '+resendKey, 'Content-Type':'application/json', 'Content-Length':Buffer.byteLength(data) }, timeout:8000 }, (res)=>{ let d=''; res.on('data',c=>d+=c); res.on('end',()=>resolve({ status:res.statusCode, body:d })); });
+      req.on('error', reject); req.on('timeout', ()=>{ req.destroy(); reject(new Error('Resend did not respond')); }); req.write(data); req.end();
+    });
+    if (r.status !== 200 && r.status !== 201) throw new Error('Resend failed ('+r.status+'): '+String(r.body||'').slice(0,200)+' - Resend me shurwatsmmpannel@gmail.com verify karo ya onboarding@resend.dev use karo.');
+    return true;
+  }
+  // Agar Resend key nahi hai to SMTP try karo, par sirf 8 sec tak (Vercel 10 sec me timeout de deta hai, 20 sec wala timer 500 dega)
+  return sendGmailSMTP({ user, pass, to, subject, html });
+}
+function sendGmailSMTP({ user, pass, to, subject, html }) {
   return new Promise((resolve, reject) => {
-    const socket = tls.connect(465, 'smtp.gmail.com', { servername: 'smtp.gmail.com', rejectUnauthorized: true });
+    const socket = tls.connect(465, 'smtp.gmail.com', { servername: 'smtp.gmail.com', rejectUnauthorized: true, timeout: 8000 });
     let buf = ''; let stage = 0;
-    const timer = setTimeout(() => { try { socket.destroy(); } catch(e){} reject(new Error('Gmail did not respond. Try again.')); }, 20000);
+    const timer = setTimeout(() => { try { socket.destroy(); } catch(e){} reject(new Error('Gmail SMTP blocked on Vercel (port 465). Vercel me RESEND_API_KEY dalo - https://resend.com se free key lo, 2 min me OTP chalega.')); }, 8000);
     const b64 = (s) => Buffer.from(s, 'utf8').toString('base64');
     const send = (s) => { try { socket.write(s + '\r\n'); } catch(e){} };
     const fail = (m) => { clearTimeout(timer); try { socket.destroy(); } catch(e){} reject(new Error(m)); };
-    socket.on('error', (e) => { clearTimeout(timer); reject(new Error('Could not connect to Gmail: ' + e.message)); });
+    socket.on('error', (e) => { clearTimeout(timer); reject(new Error('Gmail SMTP blocked / failed: ' + e.message + ' - Vercel me RESEND_API_KEY dalo, SMTP Vercel par block hai.')); });
+    socket.on('timeout', () => { clearTimeout(timer); try{ socket.destroy(); }catch(e){} reject(new Error('Gmail SMTP timeout - Vercel me RESEND_API_KEY dalo.')); });
     socket.on('data', (chunk) => {
       buf += chunk.toString('utf8');
       if (!buf.includes('\r\n')) return;
@@ -75,6 +92,7 @@ function sendGmail({ user, pass, to, subject, html }) {
     });
   });
 }
+async function sendGmail(args){ return sendGmailHTTPS(args); }
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
