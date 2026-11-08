@@ -1,12 +1,31 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/admin",
-      "destination": "/admin.html"
+      "src": "index.html",
+      "use": "@vercel/static"
     },
     {
-      "source": "/((?!api/|admin\\.html|index\\.html|manifest\\.json|sw\\.js|logo-.*|favicon.*).*)",
-      "destination": "/index.html"
+      "src": "admin.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/admin",
+      "dest": "/admin.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
