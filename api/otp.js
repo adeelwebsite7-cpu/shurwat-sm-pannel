@@ -98,14 +98,14 @@ module.exports = async (req, res) => {
     if (!em || !em.includes('@')) return res.status(400).json({ error:'Enter a valid Gmail Address' });
     const user = (process.env.GMAIL_USER || '').trim();
     const pass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
-    if (!user || !pass) return res.status(500).json({ error:'OTP service not set up. Check GMAIL_USER + GMAIL_APP_PASSWORD in Vercel.' });
+    if (!user || !pass) return res.status(500).json({ error:'OTP service not set up. Vercel me GMAIL_USER + GMAIL_APP_PASSWORD nahi hai. Variables check karo + Redeploy karo. GMAIL_USER=' + (user ? 'OK' : 'MISSING') + ', APP_PASS=' + (pass ? 'OK' : 'MISSING') });
     const prev = store.get(em) || await fbGet(em);
     if (prev && prev.sentAt && (Date.now() - prev.sentAt < 60*1000)) return res.status(429).json({ error:'OTP already sent. Wait 60 seconds and try again.' });
     const code = String(Math.floor(100000 + Math.random()*900000));
     const rec = { email:em, code, sentAt:Date.now(), expiresAt:Date.now()+5*60*1000, attempts:0, verified:false };
     store.set(em, rec); await fbPut(em, rec);
     try { await sendGmail({ user, pass, to:em, subject:'Your SHURWAT SMM OTP - '+code, html:'<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#0f172a;color:#fff;border-radius:16px;text-align:center"><h1>SHURWAT SMM</h1><p>Your OTP for Sign Up</p><div style="font-size:36px;font-weight:800;letter-spacing:8px;background:#fff;color:#111;padding:16px;border-radius:12px">'+code+'</div><p style="color:#94a3b8;font-size:13px">This code expires in 5 minutes. Never share it.</p></div>' }); }
-    catch(e){ store.delete(em); await fbDel(em); return res.status(500).json({ error:String(e.message||'').slice(0,160) }); }
+    catch(e){ store.delete(em); await fbDel(em); let msg=String(e.message||''); let hint=''; if(msg.includes('login failed')||msg.includes('535')) hint=' - Gmail App Password galat hai. Gmail me naya App Password banao (16 digit, bina gap), Vercel me dalo, Redeploy karo. Gmail ka password nahi, App Password hai.'; else if(msg.includes('did not respond')||msg.includes('Could not connect')) hint=' - Gmail se connect nahi ho raha, 1 min baad dobara try karo.'; return res.status(500).json({ error: msg.slice(0,200) + hint }); }
     return res.status(200).json({ ok:true, msg:'OTP sent to your Gmail' });
-  }catch(e){ return res.status(500).json({ error:'Could not send OTP. Try again.' }); }
+  }catch(e){ console.log('OTP 500:', e.message, e.stack); return res.status(500).json({ error:'OTP 500: ' + String(e.message||'Unknown error').slice(0,200) + ' - Vercel Logs check karo.' }); }
 };
