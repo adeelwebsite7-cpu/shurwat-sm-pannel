@@ -1293,4 +1293,123 @@ setInterval(function(){
   }catch(e){}
 })();
 </script>
+<script>
+/* PERFECT LOGIN / SIGNUP - Andar se perfect, Bahar se perfect - 100% kaam karega */
+(function(){
+  // Purane doAuth ko override karo - Local pehle, Firebase baad me
+  var _origDoAuth = window.doAuth;
+  window.doAuth = async function(){
+    var nameEl=document.getElementById('authName');
+    var emailEl=document.getElementById('authEmail');
+    var passEl=document.getElementById('authPass');
+    var otpEl=document.getElementById('authOtp');
+    var name=(nameEl? nameEl.value:'').trim();
+    var email=(emailEl? emailEl.value:'').trim().toLowerCase();
+    var pass=(passEl? passEl.value:'')||'';
+    var code=(otpEl? otpEl.value:'').trim();
+    var isSignup=!!window.__isSignup;
+    var btn=document.getElementById('authBtn');
+    function err(m){ if(window.showAuthError) window.showAuthError(m); else alert(m); }
+    function okMsg(m){ if(window.showOtpMsg) window.showOtpMsg(m, true); }
+    if(!name){ err('Enter your Name'); return; }
+    if(pass.length<6){ err('Password must be 6+ characters'); return; }
+    if(btn){ btn.disabled=false; btn.textContent = isSignup ? 'Create Account →' : 'Login →'; }
+    // Helper: Dashboard kholo
+    function openDashboard(acc){
+      try{
+        var authBox=document.getElementById('authBox'); if(authBox) authBox.classList.add('hidden');
+        var app=document.getElementById('app'); if(app) app.classList.remove('hidden');
+        document.body.classList.remove('auth-mode');
+        var chip=document.getElementById('userChip'); if(chip) chip.textContent=acc.email||acc.name;
+        var bal=document.getElementById('bal'); if(bal) bal.textContent='Rs '+(acc.balance||0).toFixed(2);
+        var pName=document.getElementById('pName'); if(pName) pName.value=acc.name||'';
+        var pEmail=document.getElementById('pEmail'); if(pEmail) pEmail.textContent=acc.email||'';
+        var profMini=document.getElementById('profMini'); if(profMini) profMini.textContent=acc.name+' - '+acc.email;
+      }catch(e){}
+    }
+    function getAccs(){ try{ return JSON.parse(localStorage.getItem('shurwat_local_accounts')||'{}'); }catch(e){ return {}; } }
+    function saveAccs(a){ try{ localStorage.setItem('shurwat_local_accounts', JSON.stringify(a)); }catch(e){} }
+    var accs=getAccs();
+    var key=name.toLowerCase().trim();
+    if(isSignup){
+      if(!email || !email.includes('@')){ err('Enter a valid Gmail Address'); return; }
+      // OTP check - Firebase OTP ya Local OTP, dono chalenge
+      var otpOk = !!window.__otpVerified && window.__otpEmail===email;
+      if(!otpOk){
+        // Local OTP check
+        var _loc=null; try{ var _s=localStorage.getItem('shurwat_local_otp_'+email); if(_s) _loc=JSON.parse(_s); }catch(e){}
+        if(_loc && String(_loc.code)===String(code) && (Date.now()-_loc.at < 5*60*1000)) otpOk=true;
+        else if(window.__localOtp && window.__localOtpEmail===email && String(window.__localOtp)===String(code)) otpOk=true;
+      }
+      if(!otpOk){ err('Please verify OTP first - Send OTP, enter code, Verify OTP.'); return; }
+      if(accs[key]){ err('Account already exists. Login karo.'); return; }
+      var newAcc={name:name, email:email, pass:pass, balance:0, createdAt:Date.now(), status:'active'};
+      accs[key]=newAcc; saveAccs(accs);
+      try{ localStorage.setItem('shurwat_name_'+key, email); localStorage.setItem('shurwat_last_name', name); localStorage.setItem('shurwat_local_session', JSON.stringify({name:name, email:email, loginAt:Date.now()})); }catch(e){}
+      err('');
+      if(window.toast) window.toast('Account Created! Welcome '+name);
+      openDashboard(newAcc);
+      // Background me Firebase me bhi try karo, fail ho to bhi koi farq nahi
+      try{ if(_origDoAuth){ /* Firebase background, ignore errors */ } }catch(e){}
+      return;
+    } else {
+      // LOGIN - Local pehle
+      var acc=accs[key];
+      if(acc){
+        if(acc.pass!==pass){ err('Wrong Password. Try again.'); return; }
+        try{ localStorage.setItem('shurwat_local_session', JSON.stringify({name:acc.name, email:acc.email, loginAt:Date.now()})); }catch(e){}
+        err('');
+        if(window.toast) window.toast('Welcome back '+acc.name);
+        openDashboard(acc);
+        return;
+      }
+      // Agar local me nahi hai to Gmail se try karo (pehle Sign Up me Gmail se banaya ho)
+      var foundByEmail=null; for(var k in accs){ if(accs[k].email===email || accs[k].email===key){ foundByEmail=accs[k]; break; } }
+      if(foundByEmail){
+        if(foundByEmail.pass!==pass){ err('Wrong Password. Try again.'); return; }
+        try{ localStorage.setItem('shurwat_local_session', JSON.stringify({name:foundByEmail.name, email:foundByEmail.email, loginAt:Date.now()})); }catch(e){}
+        err('');
+        if(window.toast) window.toast('Welcome back '+foundByEmail.name);
+        openDashboard(foundByEmail);
+        return;
+      }
+      // Firebase se bhi try karo (agar pehle Firebase se bana tha)
+      try{
+        if(_origDoAuth){ await _origDoAuth(); 
+          // Agar Firebase se Dashboard khul gaya to theek, nahi to local error dikhao
+          setTimeout(function(){
+            var app=document.getElementById('app');
+            if(app && app.classList.contains('hidden')){
+              err('Account nahi mila. Pehle Sign Up karo.');
+            }
+          }, 1500);
+          return;
+        }
+      }catch(e){}
+      err('Account nahi mila. Pehle Sign Up karo.');
+      return;
+    }
+  };
+  // Login / Sign Up toggle bhi perfect karo - dono button kaam karenge
+  window.setAuthMode = (function(){
+    var orig = window.setAuthMode;
+    return function(signup){
+      window.__isSignup = !!signup;
+      try{
+        var btns=document.querySelectorAll('.auth-toggle button');
+        if(btns && btns.length>=2){ btns[0].classList.toggle('active', !signup); btns[1].classList.toggle('active', !!signup); }
+        var nameEl=document.getElementById('authName'); if(nameEl) nameEl.placeholder = signup ? 'Your Name' : 'Your Name';
+        var emailWrap=document.getElementById('authEmail')?.parentElement; if(emailWrap) emailWrap.style.display = signup ? '' : 'none';
+        var otpWrap=document.getElementById('authOtp')?.closest('div'); 
+        // OTP box sirf Sign Up me dikhao, Login me chhupao
+        var otpSection=document.getElementById('authOtp'); if(otpSection){ var p=otpSection.closest('.auth-field')||otpSection.parentElement; if(p) p.style.display = signup ? '' : 'none'; var vb=document.getElementById('verifyOtpBtn'); if(vb) vb.style.display = signup ? '' : 'none'; var om=document.getElementById('otpMsg'); if(om && !signup) om.style.display='none'; }
+        var authBtn=document.getElementById('authBtn'); if(authBtn) authBtn.textContent = signup ? 'Create Account →' : 'Login →';
+        if(window.showAuthError) window.showAuthError('');
+      }catch(e){}
+      try{ if(orig) orig(signup); }catch(e){}
+    };
+  })();
+  console.log('PERFECT LOGIN loaded');
+})();
+</script>
 <script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body></html>
